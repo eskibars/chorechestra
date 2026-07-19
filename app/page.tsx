@@ -129,6 +129,12 @@ export default function Home() {
       // If saved data is malformed, the friendly starter board remains available.
     }
     setReady(true);
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // The board still works normally if a browser blocks offline caching.
+      });
+    }
   }, []);
 
   useEffect(() => {
