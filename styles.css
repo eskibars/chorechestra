@@ -105,7 +105,12 @@ tbody tr.drag-over td { box-shadow: inset 0 4px 0 var(--sun); }
 .matrix-total i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--child-color); box-shadow: 0 0 0 4px rgba(255,255,255,.12); }
 .matrix-total strong { font-size: 21px; }
 .matrix-total small { font-size: 9px; text-transform: uppercase; letter-spacing: .7px; opacity: .65; margin-left: 5px; }
-.print-boards, .print-kid-title { display: none; }
+.print-boards, .print-kid-title, .print-weekly-note { display: none; }
+.weekly-note-editor { display: grid; gap: 8px; margin-top: 16px; padding: 18px 20px; border: 1px solid rgba(24,52,46,.2); border-radius: 14px; background: rgba(255,253,248,.7); }
+.weekly-note-editor > span { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
+.weekly-note-editor > span small { color: var(--ink-soft); font-weight: 600; letter-spacing: 0; text-transform: none; }
+.weekly-note-editor textarea { width: 100%; min-height: 82px; resize: vertical; border: 1px solid #b9b1a4; border-radius: 10px; background: white; color: var(--ink); padding: 12px 13px; font: 15px/1.45 Georgia,serif; }
+.weekly-note-editor > small { color: var(--ink-soft); font-size: 10px; }
 .empty-board { min-height: 330px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--ink-soft); border-radius: 18px; background: rgba(255,255,255,.45); text-align: center; }
 .empty-board > span { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--sun-pale); font-size: 28px; }
 .empty-board h3 { font-family: Georgia, serif; font-size: 26px; margin: 15px 0 5px; }
@@ -211,6 +216,9 @@ fieldset legend small { color: var(--ink-soft); font-weight: 600; text-transform
   .print-kid-title .avatar { width: 40px; height: 40px; }
   .print-kid-title p { margin: 0; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
   .print-kid-title h2 { margin: 1px 0 0; font-family: Georgia,serif; font-size: 24px; }
+  .print-weekly-note:not(.empty) { display: block; min-height: 58px; padding: 10px 15px; border-top: 1px solid #222; background: white; }
+  .print-weekly-note strong { display: block; margin-bottom: 4px; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .print-weekly-note p { margin: 0; white-space: pre-wrap; font: 12px/1.35 Georgia,serif; }
   .matrix-scroll { overflow: visible; }
   table { min-width: 0; font-size: 10px; }
   thead th { height: 48px; print-color-adjust: exact; }

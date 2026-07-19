@@ -25,6 +25,7 @@ const STARTER_DATA = {
     { id: "bedtime", title: "In bed before 9pm", childIds: ["esme"], days: DAYS.map((day) => day.key), reward: null },
   ],
   completions: {},
+  notes: {},
 };
 
 const app = document.querySelector("#app");
@@ -44,7 +45,10 @@ function clone(value) {
 function loadData() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved && Array.isArray(saved.children) && Array.isArray(saved.chores) && saved.completions) return saved;
+    if (saved && Array.isArray(saved.children) && Array.isArray(saved.chores) && saved.completions) {
+      saved.notes = saved.notes && typeof saved.notes === "object" ? saved.notes : {};
+      return saved;
+    }
   } catch (_) {}
   return clone(STARTER_DATA);
 }
@@ -186,7 +190,21 @@ function childMatrix(child, print = false) {
         </table>
       </div>
       <div class="matrix-total"><span><i></i> Keep going, ${escapeHTML(child.name)}!</span>${print ? "" : `<strong>${money(stats.earned)} <small>earned this week</small></strong>`}</div>
+      ${print ? `<div class="print-weekly-note${weeklyNote() ? "" : " empty"}"><strong>Note for the week</strong><p data-print-weekly-note>${escapeHTML(weeklyNote())}</p></div>` : ""}
     </article>`;
+}
+
+function weeklyNote() {
+  return data.notes?.[dateKey(weekStart)] || "";
+}
+
+function weeklyNoteEditor() {
+  return `
+    <label class="weekly-note-editor">
+      <span>Note for this week <small>optional</small></span>
+      <textarea data-weekly-note maxlength="500" placeholder="A reminder, encouragement, or little family note…">${escapeHTML(weeklyNote())}</textarea>
+      <small>Printed beneath every child’s chart</small>
+    </label>`;
 }
 
 function render() {
@@ -238,7 +256,7 @@ function render() {
         ${childTabs()}
         <button class="add-child-tab" data-action="manage">＋ Add child</button>
       </div>
-      <div class="screen-board">${activeChild ? childMatrix(activeChild) : `<div class="empty-board"><span>☀</span><h3>A fresh little slate</h3><p>Add your first child to get started.</p><button class="button button-sun" data-action="manage">Add a child</button></div>`}</div>
+      <div class="screen-board">${activeChild ? `${childMatrix(activeChild)}${weeklyNoteEditor()}` : `<div class="empty-board"><span>☀</span><h3>A fresh little slate</h3><p>Add your first child to get started.</p><button class="button button-sun" data-action="manage">Add a child</button></div>`}</div>
       <div class="print-boards">${data.children.map((child) => childMatrix(child, true)).join("")}</div>
     </section>
 
@@ -382,6 +400,20 @@ app.addEventListener("change", (event) => {
   saveData();
   if (input.checked) showCelebration();
   render();
+});
+
+app.addEventListener("input", (event) => {
+  const note = event.target.closest("[data-weekly-note]");
+  if (!note) return;
+  const key = dateKey(weekStart);
+  const value = note.value;
+  if (value.trim()) data.notes[key] = value;
+  else delete data.notes[key];
+  saveData();
+  app.querySelectorAll("[data-print-weekly-note]").forEach((printedNote) => {
+    printedNote.textContent = value;
+    printedNote.closest(".print-weekly-note").classList.toggle("empty", !value.trim());
+  });
 });
 
 app.addEventListener("dragstart", (event) => {
