@@ -162,24 +162,24 @@ function childMatrix(child, print = false) {
           </button>
         </td>
         ${cells}
-        <td class="earned-cell">${chore.reward !== null ? `<strong>${money(choreEarned)}</strong>` : "<span>—</span>"}</td>
+        ${print ? "" : `<td class="earned-cell">${chore.reward !== null ? `<strong>${money(choreEarned)}</strong>` : "<span>—</span>"}</td>`}
       </tr>`;
   }).join("");
 
   return `
     <article class="matrix-card" style="--child-color:${child.color}">
-      ${print ? `<div class="print-kid-title"><span class="avatar">${escapeHTML(child.name.slice(0, 1).toUpperCase())}</span><div><p>This week belongs to</p><h2>${escapeHTML(child.name)}</h2></div><strong>${money(stats.earned)} earned</strong></div>` : ""}
+      ${print ? `<div class="print-kid-title"><span class="avatar">${escapeHTML(child.name.slice(0, 1).toUpperCase())}</span><div><p>This week belongs to</p><h2>${escapeHTML(child.name)}</h2></div></div>` : ""}
       <div class="matrix-scroll">
         <table>
           <thead><tr>
             <th class="task-head"><span>My jobs</span><small>${chores.length} routines</small></th>
             ${DAYS.map((day, index) => `<th><span>${day.short}</span><small>${dates[index].getDate()}</small></th>`).join("")}
-            <th class="earned-head"><span>Earned</span><small>this week</small></th>
+            ${print ? "" : `<th class="earned-head"><span>Earned</span><small>this week</small></th>`}
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
-      <div class="matrix-total"><span><i></i> Keep going, ${escapeHTML(child.name)}!</span><strong>${money(stats.earned)} <small>earned this week</small></strong></div>
+      <div class="matrix-total"><span><i></i> Keep going, ${escapeHTML(child.name)}!</span>${print ? "" : `<strong>${money(stats.earned)} <small>earned this week</small></strong>`}</div>
     </article>`;
 }
 

@@ -205,7 +205,6 @@ fieldset legend small { color: var(--ink-soft); font-weight: 600; text-transform
   .print-kid-title .avatar { width: 40px; height: 40px; }
   .print-kid-title p { margin: 0; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
   .print-kid-title h2 { margin: 1px 0 0; font-family: Georgia,serif; font-size: 24px; }
-  .print-kid-title > strong { margin-left: auto; }
   .matrix-scroll { overflow: visible; }
   table { min-width: 0; font-size: 10px; }
   thead th { height: 48px; print-color-adjust: exact; }
