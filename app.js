@@ -33,6 +33,9 @@ const celebration = document.querySelector("#celebration");
 let data = loadData();
 let activeChildId = data.children[0]?.id || "";
 let weekStart = mondayOf(new Date());
+let draggedChoreId = "";
+let draggedChildId = "";
+let dropTargetId = "";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -154,12 +157,15 @@ function childMatrix(child, print = false) {
         </td>`;
     }).join("");
     return `
-      <tr>
+      <tr data-chore-row data-chore-id="${chore.id}" data-child-id="${child.id}">
         <td class="task-cell">
-          <button class="task-edit" data-action="edit-chore" data-chore-id="${chore.id}" ${print ? "disabled" : ""}>
-            <span>${escapeHTML(chore.title)}</span>
-            <small>${scheduleLabel(chore.days)}${chore.reward !== null ? ` · ${money(chore.reward)} each` : ""}</small>
-          </button>
+          <div class="task-cell-inner">
+            ${print ? "" : `<span class="drag-handle" draggable="true" tabindex="0" role="button" data-drag-handle data-chore-id="${chore.id}" data-child-id="${child.id}" aria-label="Reorder ${escapeHTML(chore.title)}. Use the up and down arrow keys, or drag." title="Drag to reorder">⠿</span>`}
+            <button class="task-edit" data-action="edit-chore" data-chore-id="${chore.id}" ${print ? "disabled" : ""}>
+              <span>${escapeHTML(chore.title)}</span>
+              <small>${scheduleLabel(chore.days)}${chore.reward !== null ? ` · ${money(chore.reward)} each` : ""}</small>
+            </button>
+          </div>
         </td>
         ${cells}
         ${print ? "" : `<td class="earned-cell">${chore.reward !== null ? `<strong>${money(choreEarned)}</strong>` : "<span>—</span>"}</td>`}
@@ -241,10 +247,50 @@ function render() {
 
 function showCelebration() {
   const messages = ["Nice one!", "High five!", "You did it!", "Tiny win!"];
-  celebration.textContent = `✦ ${messages[Math.floor(Math.random() * messages.length)]}`;
+  showStatus(`✦ ${messages[Math.floor(Math.random() * messages.length)]}`);
+}
+
+function showStatus(message) {
+  celebration.textContent = message;
   celebration.classList.remove("show");
   void celebration.offsetWidth;
   celebration.classList.add("show");
+}
+
+function reorderChore(sourceId, targetId) {
+  if (!sourceId || !targetId || sourceId === targetId) return false;
+  const sourceIndex = data.chores.findIndex((chore) => chore.id === sourceId);
+  const targetIndex = data.chores.findIndex((chore) => chore.id === targetId);
+  if (sourceIndex < 0 || targetIndex < 0) return false;
+  const [moved] = data.chores.splice(sourceIndex, 1);
+  const adjustedTargetIndex = data.chores.findIndex((chore) => chore.id === targetId);
+  const insertIndex = sourceIndex < targetIndex ? adjustedTargetIndex + 1 : adjustedTargetIndex;
+  data.chores.splice(insertIndex, 0, moved);
+  saveData();
+  return true;
+}
+
+function markDropTarget(row) {
+  app.querySelectorAll("[data-chore-row].drag-over").forEach((item) => item.classList.remove("drag-over"));
+  dropTargetId = "";
+  if (!row || row.dataset.choreId === draggedChoreId || row.dataset.childId !== draggedChildId) return;
+  row.classList.add("drag-over");
+  dropTargetId = row.dataset.choreId;
+}
+
+function finishDrag() {
+  const sourceId = draggedChoreId;
+  const targetId = dropTargetId;
+  const movedChore = data.chores.find((chore) => chore.id === sourceId);
+  draggedChoreId = "";
+  draggedChildId = "";
+  dropTargetId = "";
+  if (reorderChore(sourceId, targetId)) {
+    render();
+    showStatus(`${movedChore?.title || "Chore"} moved`);
+  } else {
+    app.querySelectorAll(".dragging, .drag-over").forEach((item) => item.classList.remove("dragging", "drag-over"));
+  }
 }
 
 function openDialog(content) {
@@ -336,6 +382,70 @@ app.addEventListener("change", (event) => {
   saveData();
   if (input.checked) showCelebration();
   render();
+});
+
+app.addEventListener("dragstart", (event) => {
+  const handle = event.target.closest("[data-drag-handle]");
+  if (!handle) return;
+  draggedChoreId = handle.dataset.choreId;
+  draggedChildId = handle.dataset.childId;
+  handle.closest("[data-chore-row]").classList.add("dragging");
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", draggedChoreId);
+});
+
+app.addEventListener("dragover", (event) => {
+  if (!draggedChoreId) return;
+  const row = event.target.closest("[data-chore-row]");
+  if (!row) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
+  markDropTarget(row);
+});
+
+app.addEventListener("drop", (event) => {
+  if (!draggedChoreId) return;
+  event.preventDefault();
+  markDropTarget(event.target.closest("[data-chore-row]"));
+  finishDrag();
+});
+
+app.addEventListener("dragend", () => finishDrag());
+
+app.addEventListener("pointerdown", (event) => {
+  const handle = event.target.closest("[data-drag-handle]");
+  if (!handle || event.pointerType === "mouse") return;
+  event.preventDefault();
+  draggedChoreId = handle.dataset.choreId;
+  draggedChildId = handle.dataset.childId;
+  handle.closest("[data-chore-row]").classList.add("dragging");
+  handle.setPointerCapture(event.pointerId);
+});
+
+app.addEventListener("pointermove", (event) => {
+  if (!draggedChoreId || event.pointerType === "mouse") return;
+  event.preventDefault();
+  markDropTarget(document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-chore-row]"));
+});
+
+app.addEventListener("pointerup", (event) => {
+  if (!draggedChoreId || event.pointerType === "mouse") return;
+  finishDrag();
+});
+
+app.addEventListener("keydown", (event) => {
+  const handle = event.target.closest("[data-drag-handle]");
+  if (!handle || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+  event.preventDefault();
+  const assigned = data.chores.filter((chore) => chore.childIds.includes(handle.dataset.childId));
+  const currentIndex = assigned.findIndex((chore) => chore.id === handle.dataset.choreId);
+  const direction = event.key === "ArrowUp" ? -1 : 1;
+  const target = assigned[currentIndex + direction];
+  if (!target || !reorderChore(handle.dataset.choreId, target.id)) return;
+  const moved = data.chores.find((chore) => chore.id === handle.dataset.choreId);
+  render();
+  app.querySelector(`[data-drag-handle][data-chore-id="${handle.dataset.choreId}"]`)?.focus();
+  showStatus(`${moved?.title || "Chore"} moved ${direction < 0 ? "up" : "down"}`);
 });
 
 modal.addEventListener("click", (event) => {

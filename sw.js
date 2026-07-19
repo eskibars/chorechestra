@@ -1,4 +1,4 @@
-const CACHE_NAME = "chore-club-shell-v1";
+const CACHE_NAME = "chore-club-shell-v2";
 const APP_SHELL = ["./", "index.html", "styles.css", "app.js"];
 
 self.addEventListener("install", (event) => {
